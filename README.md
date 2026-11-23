@@ -120,3 +120,66 @@ Dalam pengembangan Tugas 7 ini, saya menggunakan asisten AI sebagai rekan diskus
         *   *Respons AI:* AI mengidentifikasi bahwa berkas yang diekstrak baru berupa Dart SDK mandiri sehingga perintah `flutter` belum dikenali, lalu memandu saya mengekstrak bundel penuh Flutter SDK ke `C:\src\flutter` dan mengarahkan `PATH` ke `C:\src\flutter\bin`.
     *   *Prompt 2:* "oiya gw mau dong buat perbagus aja, bagian toast buat notifikasi kalo ngeklik tombol di bedain warnanya gitu biar lebih bagus, gak hitam doang"
         *   *Respons AI:* AI memberikan saran penggunaan properti `backgroundColor: item.color`, `behavior: SnackBarBehavior.floating`, dan `RoundedRectangleBorder` pada widget `SnackBar` di dalam `ItemCard`.
+
+---
+
+# Tugas 8
+## Jawaban Pertanyaan Reflektif
+
+### 1. Jelaskan perbedaan antara Navigator.push(), Navigator.pushReplacement(), dan Navigator.pop(). Metode apa yang digunakan untuk membuka formulir dari kartu aksi? Jelaskan juga bagaimana opsi Home di drawer membawa pengguna kembali ke halaman utama.
+Ketiga metode pada widget `Navigator` mengelola perpindahan halaman (*route*) di dalam struktur (*stack*) dengan cara yang berbeda-beda:
+
+-   **`Navigator.push()`** menambahkan *route* baru ke posisi paling atas pada *navigation stack* tanpa menghapus halaman sebelumnya. Halaman lama tetap tersimpan di bawahnya sehingga pengguna dapat kembali ke halaman sebelumnya menggunakan tombol *Back*.
+-   **`Navigator.pushReplacement()`** menghapus *route* yang sedang aktif di posisi paling atas *stack*, lalu langsung menggantikannya dengan *route* baru. Dengan demikian, halaman lama tidak lagi menumpuk di bawahnya.
+-   **`Navigator.pop()`** menghapus *route* paling atas yang sedang ditampilkan dari *stack*, sehingga layar otomatis kembali menampilkan *route* yang berada tepat di bawahnya (pada proyek ini juga digunakan untuk menutup `AlertDialog` saat tombol **OK** ditekan).
+
+Untuk membuka formulir (`CertificationFormPage` dan `ExperienceFormPage`) dari kartu aksi (`ItemCard`) di halaman utama, metode yang digunakan adalah **`Navigator.push()`**. Pemilihan ini bertujuan agar halaman utama (`MyHomePage`) tetap berada di bawah *stack*, sehingga pengguna dapat kembali ke beranda menggunakan tombol kembali bawaan perangkat atau peramban.
+
+Sementara itu, opsi **Home** pada `LeftDrawer` menggunakan **`Navigator.pushReplacement()`** yang mengarah ke `MyHomePage()`. Cara ini mengganti halaman formulir yang sedang aktif dengan halaman utama sehingga *stack* navigasi tetap bersih dan tidak menumpuk salinan halaman beranda berulang kali saat pengguna berpindah-pindah menu lewat drawer.
+
+### 2. Bagaimana susunan Scaffold, AppBar, dan Drawer membantu menjaga struktur halaman tetap konsisten? Berikan satu contoh penggunaan warna tema portofolio di lebih dari satu halaman.
+Susunan `Scaffold`, `AppBar`, dan `Drawer` menyediakan kerangka layout dengan standar *Material Design* yang seragam di setiap layar:
+
+-   **`Scaffold`** menjadi fondasi visual di setiap halaman (`MyHomePage`, `CertificationFormPage`, dan `ExperienceFormPage`) yang mengatur penempatan top bar, menu di samping, konten utama (`body`), serta notifikasi (`SnackBar`).
+-   **`AppBar`** menjaga posisi judul halaman dan tombol pemicu menu (*hamburger icon*) selalu berada di bagian atas layar dengan gaya tipografi dan warna yang konsisten.
+-   **`Drawer`** (`LeftDrawer`) dibuat sebagai satu komponen *reusable* di `lib/widgets/left_drawer.dart` lalu dipasang ke properti `drawer` milik `Scaffold` di seluruh halaman, sehingga daftar menu navigasi dan tampilan *header* selalu identik dari halaman mana pun pengguna membukanya.
+
+**Contoh penggunaan warna tema portofolio di lebih dari satu halaman:**
+Warna primer tema global yang diturunkan dari `seedColor: Colors.indigo` pada `ThemeData` di `lib/main.dart` diakses melalui **`Theme.of(context).colorScheme.primary`**. Properti warna tema yang sama ini digunakan sebagai `backgroundColor` pada `AppBar` di halaman utama (`lib/screens/menu.dart`) sekaligus sebagai `backgroundColor` pada `AppBar` dan tombol **Simpan** (`ElevatedButton`) di halaman formulir pengalaman (`lib/screens/experience_form.dart`).
+
+### 3. Mengapa tata letak tersebut dipilih untuk formulir? Jelaskan peran widget pengatur jarak dan widget penggulir ketika ruang layar terbatas.
+Halaman `ExperienceFormPage` disusun menggunakan tata letak vertikal (`Column` di dalam `Form`) yang dibungkus oleh `SingleChildScrollView`. Tata letak vertikal satu kolom ini dipilih karena sesuai dengan alur baca alami pengguna dari atas ke bawah pada layar perangkat mobile yang sempit, sekaligus memberikan ruang lebar penuh bagi setiap kolom input (`TextFormField` dan `DropdownButtonFormField`) agar teks yang diketik maupun pesan kesalahan validasi dapat terbaca dengan jelas tanpa terpotong.
+
+Ketika ruang layar terbatas—misalnya pada layar ponsel berukuran kecil atau saat *keyboard* muncul menutupi separuh bawah layar—kedua jenis widget berikut berperan penting:
+
+-   **Widget pengatur jarak (`Padding` dan `SizedBox`):** Memberikan ruang kosong (*margin/inset*) di tepi layar (`EdgeInsets.all(16.0)`), jarak antar-kolom input (`EdgeInsets.symmetric(vertical: 8.0)`), serta jeda antara kolom terakhir dan tombol **Simpan** (`SizedBox(height: 12.0)`). Hal ini mencegah elemen saling menempel dan menjaga kenyamanan area sentuh (*touch target*).
+-   **Widget penggulir (`SingleChildScrollView`):** Membuat seluruh isi formulir dapat digulir secara vertikal. Tanpa widget ini, `Column` yang sifatnya statis akan memicu galat *RenderFlex bottom overflow* ketika tinggi total seluruh input dan papan ketik melebihi tinggi layar, sehingga kolom terbawah dan tombol **Simpan** menjadi tidak dapat dijangkau.
+
+### 4. Apa peran GlobalKey<FormState>, validator, dan validate() saat tombol Simpan ditekan? Berikan satu contoh nilai yang ditolak oleh validasi dan jelaskan mengapa memilih jenis input atau papan ketik saja belum cukup.
+Ketiga komponen tersebut bekerja secara terpadu dalam alur validasi formulir Flutter:
+
+-   **`GlobalKey<FormState>` (`_formKey`):** Berperan sebagai pengenal unik yang terhubung ke properti `key` milik widget `Form`, sehingga tombol **Simpan** dapat mengakses `FormState` secara langsung untuk memicu validasi seluruh kolom sekaligus maupun mengatur ulang isian form (`reset()`).
+-   **`validator`:** Fungsi *callback* pada setiap `TextFormField` yang memeriksa nilai input sesuai aturan model (`Experience`), lalu mengembalikan `String` pesan kesalahan jika tidak valid atau `null` jika valid.
+-   **`_formKey.currentState!.validate()`:** Metode yang dipanggil di dalam `onPressed` tombol **Simpan** untuk mengeksekusi seluruh `validator` pada setiap kolom secara serentak. Jika ada minimal satu kolom yang mengembalikan pesan kesalahan, `validate()` bernilai `false`, pesan galat ditampilkan tepat di bawah kolom terkait, dan `AlertDialog` tidak dimunculkan. Hanya jika seluruh kolom mengembalikan `null` (`true`), barulah `showDialog()` dijalankan untuk menampilkan ringkasan data.
+
+**Contoh nilai yang ditolak oleh validasi:**
+-   Memasukkan hanya spasi kosong (`"   "`) pada kolom **Judul Experience** atau **Deskripsi Experience** akan ditolak karena pengecekan `value.trim().isEmpty` mengembalikan pesan error.
+-   Memasukkan tautan tanpa skema valid seperti `"google.com"` atau `"htp://salah"` pada kolom **URL Thumbnail** akan ditolak oleh `Uri.tryParse()` karena tidak menggunakan skema `http://` atau `https://` yang valid.
+
+**Mengapa memilih jenis input atau papan ketik (`keyboardType`) saja belum cukup:**
+Pengaturan seperti `keyboardType: TextInputType.url` hanya mengubah tata letak tombol pada papan ketik virtual demi kenyamanan mengetik, bukan sebagai aturan keamanan atau validasi data. Pengguna tetap dapat mengetik karakter sembarang, menempelkan (*paste*) teks berformat salah dari *clipboard*, mengosongkan kolom wajib, atau mengetik menggunakan papan ketik fisik (seperti saat aplikasi dijalankan di peramban web). Oleh karena itu, logika pemeriksaan eksplisit di dalam `validator` tetap wajib ada untuk menjamin integritas data.
+
+---
+
+## AI Disclosure & Log Prompting
+Dalam pengembangan Tugas 8 ini, saya menggunakan asisten AI sebagai rekan diskusi teknis untuk membantu mendiagnosis dan menyelesaikan masalah *overflow* tata letak di halaman beranda ketika jumlah kartu aksi bertambah.
+
+*   **Tools yang Digunakan:** Gemini 4.0 Neon
+*   **Strategi Prompting:** Saya melampirkan berkas kode terkait beserta tangkapan layar error *overflow* agar AI dapat mendiagnosis akar penyebabnya dan memberikan saran perbaikan tata letak secara spesifik terhadap proyek saya.
+*   **Bagian Spesifik yang Dibantu AI:**
+    *   Mendiagnosis penyebab hilangnya tombol **Logout** dan munculnya galat `BOTTOM OVERFLOWED BY 525 PIXELS` di halaman utama setelah menambahkan kartu aksi keempat, serta memberikan saran perbaikan dengan membungkus `body` menggunakan `SingleChildScrollView` agar halaman dapat di-*scroll*.
+*   **Analisis Kritis Keterbatasan AI & Perbaikan Manual:**
+    Pada awalnya AI hanya memberikan potongan kode parsial untuk perubahan di `lib/screens/menu.dart` tanpa menampilkan konteks penuh, serta hanya berfokus pada solusi *scrolling* menggunakan `SingleChildScrollView` tanpa menyebutkan penyesuaian properti `crossAxisCount` pada `GridView.count`. Akibatnya, tata letak kartu aksi masih menyisakan satu tombol sendirian di baris kedua. Sebagai perbaikan manual, saya menelaah struktur `GridView.count` secara mandiri dan menyesuaikan nilai `crossAxisCount` agar keempat kartu aksi tampil lebih proporsional dan rapi, serta menguji seluruh alur navigasi, validasi input kosong/URL tidak valid, dan `flutter analyze` secara mandiri hingga tidak ada temuan isu.
+*   **Log Prompting:**
+    *   *Prompt 1:* "COba dong telaah ini, ini kok gw tombol Logout gw malah ilang ya? [Melampirkan kode experience_form.dart, menu.dart, left_drawer.dart, certification_card.dart, dan screenshot BOTTOM OVERFLOWED BY 525 PIXELS]"
+        *   *Respons AI:* AI menjelaskan bahwa penambahan item keempat pada `GridView.count` dengan 3 kolom mendorong tombol Logout ke baris kedua yang keluar dari batas layar karena belum dapat di-*scroll*, lalu memberikan saran perbaikan menggunakan `SingleChildScrollView` dan `NeverScrollableScrollPhysics()` agar halaman bisa digulir tanpa bentrok *scroll*.
