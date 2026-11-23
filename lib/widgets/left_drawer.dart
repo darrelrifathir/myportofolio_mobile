@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myportofolio_mobile/screens/menu.dart';
-// TODO: Impor halaman CertificationFormPage jika sudah dibuat
 import 'package:myportofolio_mobile/screens/certification_form.dart';
+import 'package:myportofolio_mobile/screens/experience_form.dart';
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
@@ -11,7 +11,6 @@ class LeftDrawer extends StatelessWidget {
     return Drawer(
       child: ListView(
         children: [
-          // TODO: Bagian drawer header
           const DrawerHeader(
             decoration: BoxDecoration(
               color: Colors.indigo,
@@ -38,7 +37,6 @@ class LeftDrawer extends StatelessWidget {
               ],
             ),
           ),
-          // TODO: Bagian routing
           ListTile(
             leading: const Icon(Icons.home_outlined),
             title: const Text('Home'),
@@ -57,13 +55,23 @@ class LeftDrawer extends StatelessWidget {
             title: const Text('Add Certification'),
             // Navigasi ke halaman tambah sertifikasi
             onTap: () {
-              /*
-              TODO: Buatlah routing ke halaman CertificationFormPage yang akan dibuat nanti.
-              */
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder: (context) => const CertificationFormPage(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.work_outline),
+            title: const Text('Add Experience'),
+            // Navigasi ke halaman tambah experience
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ExperienceFormPage(),
                 ),
               );
             },

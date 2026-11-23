@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:myportofolio_mobile/screens/menu.dart';
 import 'package:myportofolio_mobile/screens/certification_form.dart';
+import 'package:myportofolio_mobile/screens/experience_form.dart';
 
 class ItemCard extends StatelessWidget {
   final ItemHomepage item;
@@ -32,11 +33,17 @@ class ItemCard extends StatelessWidget {
 
           // Navigate ke halaman yang sesuai
           if (item.name == "Tambah Sertifikasi") {
-            // TODO: Gunakan Navigator.push() untuk melakukan navigasi ke MaterialPageRoute yang mencakup CertificationFormPage
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const CertificationFormPage(),
+              ),
+            );
+          } else if (item.name == "Tambah Experience") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ExperienceFormPage(),
               ),
             );
           }
