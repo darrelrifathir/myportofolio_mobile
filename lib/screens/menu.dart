@@ -70,7 +70,7 @@ class MyHomePage extends StatelessWidget {
                       padding: const EdgeInsets.all(20),
                       crossAxisSpacing: 10,
                       mainAxisSpacing: 10,
-                      crossAxisCount: 4, 
+                      crossAxisCount: 4,
                       shrinkWrap: true,
                       children: items.map((ItemHomepage item) {
                         return ItemCard(item);

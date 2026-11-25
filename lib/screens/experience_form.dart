@@ -32,10 +32,7 @@ class _ExperienceFormPageState extends State<ExperienceFormPage> {
         title: const Center(
           child: Text(
             'Add Experience Form',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
         ),
         backgroundColor: Theme.of(context).colorScheme.primary,
@@ -49,7 +46,7 @@ class _ExperienceFormPageState extends State<ExperienceFormPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Title (Judul Experience) 
+              // 1. Title (Judul Experience)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: TextFormField(
@@ -77,7 +74,7 @@ class _ExperienceFormPageState extends State<ExperienceFormPage> {
                 ),
               ),
 
-              // 2. Category (Dropdown) 
+              // 2. Category (Dropdown)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: DropdownButtonFormField<String>(
@@ -104,7 +101,7 @@ class _ExperienceFormPageState extends State<ExperienceFormPage> {
                 ),
               ),
 
-              // 3. Description (Deskripsi Experience) 
+              // 3. Description (Deskripsi Experience)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: TextFormField(
@@ -163,7 +160,7 @@ class _ExperienceFormPageState extends State<ExperienceFormPage> {
 
               const SizedBox(height: 12.0),
 
-              // 5. Save button 
+              // 5. Save button
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
@@ -188,9 +185,7 @@ class _ExperienceFormPageState extends State<ExperienceFormPage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text('Judul: ${_title.trim()}'),
-                                    Text(
-                                      'Kategori: ${_categories[_category]}',
-                                    ),
+                                    Text('Kategori: ${_categories[_category]}'),
                                     Text('Deskripsi: ${_description.trim()}'),
                                     Text(
                                       'URL Thumbnail: ${_thumbnail.trim().isEmpty ? "-" : _thumbnail.trim()}',

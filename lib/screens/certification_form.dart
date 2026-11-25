@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-// TODO: Impor drawer yang sudah dibuat sebelumnya
+import 'package:myportofolio_mobile/models/certification.dart';
+import 'package:myportofolio_mobile/services/api_client.dart';
+import 'package:myportofolio_mobile/services/auth_state.dart';
+import 'package:myportofolio_mobile/widgets/auth_guard.dart';
 import 'package:myportofolio_mobile/widgets/left_drawer.dart';
+import 'package:provider/provider.dart';
 
 class CertificationFormPage extends StatefulWidget {
   const CertificationFormPage({super.key});
@@ -17,6 +21,113 @@ class _CertificationFormPageState extends State<CertificationFormPage> {
   String _dateIssued = "";
   String _description = "";
   String _thumbnail = "";
+  bool _isSubmitting = false;
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final ok = await ensureLoggedIn(context);
+    if (!ok || !mounted) return;
+
+    final authState = context.read<AuthState>();
+    final token = authState.token;
+    if (token == null) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    final newCertification = Certification(
+      title: _title.trim(),
+      issuer: _issuer.trim(),
+      dateIssued: _dateIssued.trim(),
+      description: _description.trim(),
+      thumbnail: _thumbnail.trim(),
+    );
+
+    try {
+      final created = await context.read<ApiClient>().createCertification(
+        newCertification,
+        token: token,
+      );
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Sertifikasi berhasil ditambahkan!'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Nama Sertifikasi: ${created.title}'),
+                  Text('Penerbit: ${created.issuer}'),
+                  Text('Tanggal Diterbitkan: ${created.dateIssued}'),
+                  Text('Deskripsi: ${created.description}'),
+                  Text(
+                    'URL Gambar: ${created.thumbnail.isEmpty ? "-" : created.thumbnail}',
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.pop(context);
+                  _formKey.currentState!.reset();
+                  setState(() {
+                    _title = "";
+                    _issuer = "";
+                    _dateIssued = "";
+                    _description = "";
+                    _thumbnail = "";
+                  });
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.statusCode == 401) {
+        await authState.logout();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            const SnackBar(
+              content: Text('Sesi berakhir. Silakan login kembali.'),
+            ),
+          );
+        await ensureLoggedIn(context);
+      } else {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                'Gagal menyimpan sertifikasi (status ${e.statusCode}).',
+              ),
+            ),
+          );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text('Terjadi kesalahan koneksi: $e')),
+        );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,22 +136,23 @@ class _CertificationFormPageState extends State<CertificationFormPage> {
         title: const Center(
           child: Text(
             'Add Certification Form',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
         ),
-        backgroundColor: Colors.indigo,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
       ),
-      // TODO: Tambahkan drawer yang sudah dibuat di sini
       drawer: const LeftDrawer(),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // === Title (Nama Sertifikasi) ===
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: TextFormField(
                   decoration: InputDecoration(
                     hintText: "Contoh: CS50x",
@@ -65,7 +177,7 @@ class _CertificationFormPageState extends State<CertificationFormPage> {
 
               // === Issuer (Penerbit Sertifikasi) ===
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: TextFormField(
                   decoration: InputDecoration(
                     hintText: "Contoh: Harvard University",
@@ -90,10 +202,10 @@ class _CertificationFormPageState extends State<CertificationFormPage> {
 
               // === Date Issued (Tanggal diterbitkan) ===
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: TextFormField(
                   decoration: InputDecoration(
-                    hintText: "YYYY-MM-DD (Contoh: 2026-11-18)",
+                    hintText: "YYYY-MM-DD (Contoh: 2026-11-25)",
                     labelText: "Tanggal diterbitkan",
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(5.0),
@@ -108,6 +220,10 @@ class _CertificationFormPageState extends State<CertificationFormPage> {
                     if (value == null || value.trim().isEmpty) {
                       return "Tanggal diterbitkan tidak boleh kosong!";
                     }
+                    final dateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+                    if (!dateRegex.hasMatch(value.trim())) {
+                      return "Gunakan format tanggal YYYY-MM-DD!";
+                    }
                     return null;
                   },
                 ),
@@ -115,7 +231,7 @@ class _CertificationFormPageState extends State<CertificationFormPage> {
 
               // === Description (Deskripsi Sertifikasi) ===
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: TextFormField(
                   maxLines: 3,
                   decoration: InputDecoration(
@@ -141,8 +257,9 @@ class _CertificationFormPageState extends State<CertificationFormPage> {
 
               // === Thumbnail (URL gambar - Opsional) ===
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: TextFormField(
+                  keyboardType: TextInputType.url,
                   decoration: InputDecoration(
                     hintText: "https://... (opsional)",
                     labelText: "URL gambar",
@@ -155,6 +272,17 @@ class _CertificationFormPageState extends State<CertificationFormPage> {
                       _thumbnail = value!;
                     });
                   },
+                  validator: (String? value) {
+                    if (value != null && value.trim().isNotEmpty) {
+                      final uri = Uri.tryParse(value.trim());
+                      if (uri == null ||
+                          !(uri.isScheme('http') || uri.isScheme('https')) ||
+                          uri.host.isEmpty) {
+                        return "Format URL tidak valid! Gunakan http:// atau https://";
+                      }
+                    }
+                    return null;
+                  },
                 ),
               ),
 
@@ -165,47 +293,24 @@ class _CertificationFormPageState extends State<CertificationFormPage> {
                   padding: const EdgeInsets.all(8.0),
                   child: ElevatedButton(
                     style: ButtonStyle(
-                      backgroundColor:
-                          WidgetStateProperty.all(Colors.indigo),
+                      backgroundColor: WidgetStateProperty.all(
+                        Theme.of(context).colorScheme.primary,
+                      ),
                     ),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text(
-                                  'Sertifikasi berhasil ditambahkan!'),
-                              content: SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Nama Sertifikasi: $_title'),
-                                    Text('Penerbit: $_issuer'),
-                                    Text('Tanggal Diterbitkan: $_dateIssued'),
-                                    Text('Deskripsi: $_description'),
-                                    Text('URL Gambar: $_thumbnail'),
-                                  ],
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  child: const Text('OK'),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    _formKey.currentState!.reset();
-                                  },
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      }
-                    },
-                    child: const Text(
-                      "Save",
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    onPressed: _isSubmitting ? null : _submit,
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            "Save",
+                            style: TextStyle(color: Colors.white),
+                          ),
                   ),
                 ),
               ),

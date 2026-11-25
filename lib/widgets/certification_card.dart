@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:myportofolio_mobile/screens/menu.dart';
 import 'package:myportofolio_mobile/screens/certification_form.dart';
+import 'package:myportofolio_mobile/screens/certification_list_screen.dart';
 import 'package:myportofolio_mobile/screens/experience_form.dart';
+import 'package:myportofolio_mobile/screens/menu.dart';
+import 'package:myportofolio_mobile/services/auth_state.dart';
+import 'package:myportofolio_mobile/widgets/auth_guard.dart';
+import 'package:provider/provider.dart';
 
 class ItemCard extends StatelessWidget {
   final ItemHomepage item;
@@ -11,41 +15,47 @@ class ItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      // Menggunakan warna sekunder dari skema tema aplikasi.
       color: item.color,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        // Aksi ketika kartu ditekan oleh pengguna.
-        onTap: () {
-          // Menampilkan SnackBar dengan pesan interaktif.
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text("Kamu telah menekan tombol ${item.name}!",
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+        onTap: () async {
+          final messenger = ScaffoldMessenger.of(context);
+          final navigator = Navigator.of(context);
+
+          if (item.name == "Lihat Sertifikasi") {
+            navigator.push(
+              MaterialPageRoute(
+                builder: (context) => const CertificationListScreen(),
               ),
             );
-
-          // Navigate ke halaman yang sesuai
-          if (item.name == "Tambah Sertifikasi") {
-            Navigator.push(
-              context,
+          } else if (item.name == "Tambah Sertifikasi") {
+            final ok = await ensureLoggedIn(context);
+            if (!ok || !context.mounted) return;
+            navigator.push(
               MaterialPageRoute(
                 builder: (context) => const CertificationFormPage(),
               ),
             );
           } else if (item.name == "Tambah Experience") {
-            Navigator.push(
-              context,
+            navigator.push(
               MaterialPageRoute(
                 builder: (context) => const ExperienceFormPage(),
               ),
             );
+          } else if (item.name == "Logout") {
+            final authState = context.read<AuthState>();
+            if (!authState.isLoggedIn) {
+              messenger
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  const SnackBar(content: Text("Kamu belum login.")),
+                );
+              return;
+            }
+            await authState.logout();
+            messenger
+              ..hideCurrentSnackBar()
+              ..showSnackBar(const SnackBar(content: Text("Berhasil logout!")));
           }
         },
         child: Container(
